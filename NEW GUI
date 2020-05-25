@@ -19,6 +19,46 @@ from tkinter import ttk
 from tkinter import scrolledtext
 
 
+datetime_string = ['-']
+
+maxTemp = 60
+datetime_output_results = datetime.now().strftime('%d.%m.%Y , %H:%M:%S')
+datetime_RTC = datetime.now().strftime('%H:%M:%S')
+exceltime = datetime.now().strftime('%H:%M:%S')
+date = datetime.now().strftime('%d.%m.%Y')
+
+def timeResult():
+    exceltime = datetime.now().strftime('%H:%M:%S')
+    date = datetime.now().strftime('%d.%m.%Y')
+    resultList[0] = date
+    resultList[1] = exceltime
+
+
+def timeResult_end():
+    endtime = datetime.now().strftime('%H:%M:%S')
+    resultList[2] = endtime
+
+
+testList = ['SERIAL NUMBER', 'YCODE NUMBER', 'MAC ADDRESS', 'DIAG TEST' 'TEMPERATURE', 'RTC', 'ALARM63', 'ALARM64',
+            'ALARM65', 'ALARM66',
+            'ALARM67', 'ALARM68', 'ALARM63_SHORTED', 'ALARM64_SHORTED', 'ALARM65_SHORTED', 'ALARM66_SHORTED',
+            'ALARM67_SHORTED', 'ALARM68_SHORTED']
+
+resultList = ['NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL',
+              'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL',
+              'NULL', 'NULL', 'NULL', 'NULL', 'NULL',
+              'NULL', 'NULL', 'NULL', 'NULL', 'NULL',
+              'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL']
+
+resultList2 = ['NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL',
+               'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL',
+               'NULL', 'NULL', 'NULL', 'NULL', 'NULL',
+               'NULL', 'NULL', 'NULL', 'NULL', 'NULL',
+               'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL', 'NULL']
+
+
+
+
 GUI_WIDTH = 1150
 GUI_HEIGHT = 700
 
@@ -40,12 +80,16 @@ master.title("INTRACOM TELECOM Test Equipment GUI Template")
 
 
 
+def clear_entry(event, entry):
+    entry.delete(0, END)
+
+
 
 testsFrame = LabelFrame(master, width=GUI_WIDTH/4, height=GUI_HEIGHT*.95, text='Tests')
 testsFrame.grid(column=0, row=0, sticky=N)
-monFrame = LabelFrame(master, width=GUI_WIDTH*2, height=GUI_HEIGHT*.55, text='Monitors')
+monFrame = LabelFrame(master, width=GUI_WIDTH*2, height=GUI_HEIGHT*.55, text='Serial Connection Output')
 monFrame.grid(column=2, row=0, sticky=N)
-configFrame = LabelFrame(master, width=GUI_WIDTH/4, height=GUI_HEIGHT*.95, text='Configuration & Control')
+configFrame = LabelFrame(master, width=GUI_WIDTH/4, height=GUI_HEIGHT*.95, text='Configuration & System Info')
 configFrame.grid(column=4, row=0, sticky=N)
 
 
@@ -54,6 +98,56 @@ def write(string):
     text_box.insert("end", string + "\n")
     text_box.see("end")
     text_box.config(state=tk.DISABLED)
+
+
+
+def on_select(event=None):
+    print('----------------------------')
+
+    if event:  # <-- this works only with bind because `command=` doesn't send event
+        print("event.widget:", event.widget.get())
+        resultList[6] = event.widget.get()
+
+    for i, x in enumerate(all_comboboxes):
+        print("all_comboboxes[%d]: %s" % (i, x.get()))
+        resultList[6] = event.widget.get()
+        print(resultList[6])
+        write('Ycode: ' + resultList[6] + '\n')
+
+
+all_comboboxes = []
+
+cb = ttk.Combobox(configFrame, values=("Y00-65W/19.L4", "2", "3", "4", "5"))
+cb.set("")
+cb.grid(column=1, row=0, sticky=W, pady=5)
+cb.bind('<<ComboboxSelected>>', on_select)
+
+all_comboboxes.append(cb)
+
+
+Ycode_entry_label = Label(configFrame, text="Select YCode")
+Ycode_entry_label.grid(column=0, row=0, sticky=W, pady=5)
+
+
+def Ycode_input():
+    entry_Ycode = entrytext_Ycode.get()
+    regex_Ycode = re.findall(r'Y00-\d\d\w[/]\d\d.\w\d\d?\d?', entry_Ycode)
+    if regex_Ycode:
+        Ycode = regex_Ycode[0]
+        write('Ycode: ' + Ycode + '\n')
+    elif not regex_Ycode:
+
+        write("Warning")
+
+
+Ycode_entry_label = Label(configFrame, text="Enter YCode")
+Ycode_entry_label.grid(column=0, row=1, sticky=W, pady=5)
+
+entrytext_Ycode = tk.StringVar()
+entry_Ycode = tk.Entry(configFrame, textvariable=entrytext_Ycode)
+entry_Ycode.grid(column=1, row=1, sticky=W, pady=5)
+entry_Ycode.bind("<Button-1>", lambda event: clear_entry(event, entry_Ycode))
+entry_Ycode.bind('<Return>', lambda _: Ycode_input())
 
 
 
@@ -68,55 +162,40 @@ def Yserial_input():
             write('Yserial Entered: ' + Yserial + '\n')
 
         if len(regex_Yserial[0]) == 13:
-           write("Wrong serial number!")
+            write("Wrong serial number!")
         if len(regex_Yserial[0]) == 14:
             Yserial = Yserial[1:13]
             write('Yserial Entered: ' + Yserial + '\n')
     elif not regex_Yserial:
-            write("Wrong serial number!")
+        write("Wrong serial number!")
 
-lblSerNum = Label(configFrame, text="Serial Number")
-lblSerNum.grid(column=0, row=1, sticky=W, pady=5)
-YSerial_Frame = tk.Label(configFrame, bd=10, width=15)
-YSerial_Frame.grid(column=1, row=1, sticky=W, pady=5)
-
-
-def clear_entry(event, entry):
-    entry.delete(0, END)
-
+Yserial_entry_label = Label(configFrame, text="Enter YSerial")
+Yserial_entry_label.grid(column=0, row=2, sticky=W, pady=5)
 
 entrytext_YSerial = tk.StringVar()
-entry_Yserial = tk.Entry(YSerial_Frame, textvariable=entrytext_YSerial)
-entry_Yserial.place(relwidth=1, relheight=1)
-# placeholder_text = 'Write serial here'
-# entry_Yserial.insert(0, placeholder_text)
+entry_Yserial = tk.Entry(configFrame, textvariable=entrytext_YSerial)
+entry_Yserial.grid(column=1, row=2, sticky=W, pady=5)
 entry_Yserial.bind("<Button-1>", lambda event: clear_entry(event, entry_Yserial))
 entry_Yserial.bind('<Return>', lambda _: Yserial_input())
 
 
-YCODE_frame = tk.Frame(master, bg='#2e2d2d', bd=10)
-YCODE_frame.place(relx=0.1, rely=0.04, relwidth=0.1, relheight=0.04)
-
-entrytext_Ycode = tk.StringVar()
-entry_Ycode = tk.Entry(YCODE_frame, textvariable=entrytext_Ycode)
-entry_Ycode.place(relwidth=1, relheight=1)
-# placeholder_text = 'Write YCode here'
-# entry_Ycode.insert(0, placeholder_text)
-entry_Ycode.bind("<Button-1>", lambda event: clear_entry(event, entry_Ycode))
-entry_Ycode.bind('<Return>', lambda _: Ycode_input())
 
 
+def User_ID_input():
+    entry_UserID = entrytext_UserID.get()
+    write('User ID: ' + entry_UserID)
+    resultList[3] = entry_UserID
+    print(entry_UserID)
+    return entry_UserID
 
+UserID_entry_label = Label(configFrame, text="Enter User ID")
+UserID_entry_label.grid(column=0, row=3, sticky=W, pady=5)
 
-def Ycode_input():
-    entry_Ycode = entrytext_Ycode.get()
-    regex_Ycode = re.findall(r'Y00-\d\d\w[/]\d\d.\w\d\d?\d?', entry_Ycode)
-    if regex_Ycode:
-        Ycode = regex_Ycode[0]
-        write('Ycode: ' + Ycode + '\n')
-    elif not regex_Ycode:
-
-        write("Warning")
+entrytext_UserID = tk.StringVar()
+entry_UserID = tk.Entry(configFrame, textvariable=entrytext_UserID)
+entry_UserID.grid(column=1, row=3, sticky=W, pady=5)
+entry_UserID.bind("<Button-1>", lambda event: clear_entry(event, entry_UserID))
+entry_UserID.bind('<Return>', lambda _: User_ID_input())
 
 
 
@@ -167,12 +246,11 @@ checkbox_LED.grid(row=12, column=0, sticky='W', padx=5, pady=5)
 checkbox_Traffic = tk.Checkbutton(testsFrame, text="Traffic Test")
 checkbox_Traffic.grid(row=13, column=0, sticky='W', padx=5, pady=5)
 
-checkbox_Traffic = tk.Checkbutton(testsFrame, text="Sync In/Out Test")
-checkbox_Traffic.grid(row=14, column=0, sticky='W', padx=5, pady=5)
-
 checkbox_Traffic = tk.Checkbutton(testsFrame, text="System Info")
 checkbox_Traffic.grid(row=14, column=0, sticky='W', padx=5, pady=5)
 
+checkbox_Traffic = tk.Checkbutton(testsFrame, text="Sync In/Out Test")
+checkbox_Traffic.grid(row=15, column=0, sticky='W', padx=5, pady=5)
 
 def write(string):
     text_box.config(state=tk.NORMAL)
@@ -207,92 +285,78 @@ Diag_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
 Diag_label.grid(row=1, column=1, sticky='W', padx=5, pady=5)
 
 
-
 FSE_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
 FSE_label.grid(row=2, column=1, sticky='W', padx=5, pady=5)
-
 
 
 license_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
 license_label.grid(row=3, column=1, sticky='W', padx=5, pady=5)
 
 
-
 serial_interface_test_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
 serial_interface_test_label.grid(row=4, column=1, sticky='W', padx=5, pady=5)
 
 
-
 serial_usb_interface_test_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-serial_usb_interface_test_label.grid(row=5, column=1, sticky='W', padx=5, pady=5)
-
+serial_usb_interface_test_label.grid(row=4, column=2, sticky='W', padx=5, pady=5)
 
 
 Yserial_test_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-Yserial_test_label.grid(row=6, column=1, sticky='W', padx=5, pady=5)
-
+Yserial_test_label.grid(row=5, column=1, sticky='W', padx=5, pady=5)
 
 
 Ycode_test_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-Ycode_test_label.grid(row=7, column=1, sticky='W', padx=5, pady=5)
-
+Ycode_test_label.grid(row=6, column=1, sticky='W', padx=5, pady=5)
 
 
 HWID_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-HWID_label.grid(row=8, column=1, sticky='W', padx=5, pady=5)
-
+HWID_label.grid(row=7, column=1, sticky='W', padx=5, pady=5)
 
 
 Temp_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-Temp_label.grid(row=9, column=1, sticky='W', padx=5, pady=5)
-
+Temp_label.grid(row=8, column=1, sticky='W', padx=5, pady=5)
 
 
 RTC_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-RTC_label.grid(row=10, column=1, sticky='W', padx=5, pady=5)
-
+RTC_label.grid(row=9, column=1, sticky='W', padx=5, pady=5)
 
 
 PLL_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-PLL_label.grid(row=11, column=1, sticky='W', padx=5, pady=5)
-
+PLL_label.grid(row=10, column=1, sticky='W', padx=5, pady=5)
 
 
 Pone_Interface_vin_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-Pone_Interface_vin_label.grid(row=12, column=1, sticky='W', padx=5, pady=5)
+Pone_Interface_vin_label.grid(row=11, column=1, sticky='W', padx=5, pady=5)
 
 
 Pone_Interface_vout_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-Pone_Interface_vout_label.grid(row=12, column=2, sticky='W', padx=5, pady=5)
-
+Pone_Interface_vout_label.grid(row=11, column=2, sticky='W', padx=5, pady=5)
 
 
 Leds_on_pone_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-Leds_on_pone_label.grid(row=12, column=3, sticky='W', padx=5, pady=5)
+Leds_on_pone_label.grid(row=11, column=3, sticky='W', padx=5, pady=5)
+
 
 leds_on_board_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-leds_on_board_label.grid(row=13, column=1, sticky='W', padx=5, pady=5)
+leds_on_board_label.grid(row=12, column=1, sticky='W', padx=5, pady=5)
 
 
 Traffic_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-Traffic_label.grid(row=14, column=1, sticky='W', padx=5, pady=5)
-
+Traffic_label.grid(row=13, column=1, sticky='W', padx=5, pady=5)
 
 
 leds_on_eth_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-leds_on_eth_label.grid(row=15, column=1, sticky='W', padx=5, pady=5)
-
-
-
-
-sync_in_out_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-sync_in_out_label.grid(row=16, column=1, sticky='W', padx=5, pady=5)
-
+leds_on_eth_label.grid(row=13, column=2, sticky='W', padx=5, pady=5)
 
 
 
 System_info_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
-System_info_label.grid(row=17, column=1, sticky='W', padx=5, pady=5)
+System_info_label.grid(row=14, column=1, sticky='W', padx=5, pady=5)
+
+
+sync_in_out_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+sync_in_out_label.grid(row=15, column=1, sticky='W', padx=5, pady=5)
+
 
 
 # remaining_mac_info_label = tk.Label(mainWindow, text='Remaining MAC Addresses: ')
