@@ -1,0 +1,337 @@
+from threading import Thread
+from tkinter.ttk import *
+import serial
+import tkinter as tk
+import tkinter.ttk as ttk
+from tkinter import *
+import re
+import time
+from datetime import datetime
+import os
+import openpyxl
+from openpyxl import load_workbook
+import copy
+import socket
+from tkinter import messagebox
+import visa
+from tkinter import *
+from tkinter import ttk
+from tkinter import scrolledtext
+
+
+GUI_WIDTH = 1150
+GUI_HEIGHT = 700
+
+
+
+#variables
+sncode = StringVar
+ycode = StringVar
+testerIDcode = StringVar
+userIDcode = StringVar
+ImgResultID = 2
+
+
+master = Tk()
+gui_resolution = str(GUI_WIDTH)+'x'+str(GUI_HEIGHT)+'+0+0'
+master.geometry(gui_resolution)
+master.resizable(FALSE, FALSE)
+master.title("INTRACOM TELECOM Test Equipment GUI Template")
+
+
+
+
+testsFrame = LabelFrame(master, width=GUI_WIDTH/4, height=GUI_HEIGHT*.95, text='Tests')
+testsFrame.grid(column=0, row=0, sticky=N)
+monFrame = LabelFrame(master, width=GUI_WIDTH*2, height=GUI_HEIGHT*.55, text='Monitors')
+monFrame.grid(column=2, row=0, sticky=N)
+configFrame = LabelFrame(master, width=GUI_WIDTH/4, height=GUI_HEIGHT*.95, text='Configuration & Control')
+configFrame.grid(column=4, row=0, sticky=N)
+
+
+def write(string):
+    text_box.config(state=tk.NORMAL)
+    text_box.insert("end", string + "\n")
+    text_box.see("end")
+    text_box.config(state=tk.DISABLED)
+
+
+
+def Yserial_input():
+    entry_serial = entrytext_YSerial.get()
+    regex_Yserial = re.findall(r'[0]?3[1-2]\d\d\d\d\d\d\d\d\d\d\d?', entry_serial)
+    if regex_Yserial:
+        Yserial = regex_Yserial[0]
+        if len(regex_Yserial[0]) == 12:
+            Yserial = regex_Yserial[0]
+            print(Yserial)
+            write('Yserial Entered: ' + Yserial + '\n')
+
+        if len(regex_Yserial[0]) == 13:
+           write("Wrong serial number!")
+        if len(regex_Yserial[0]) == 14:
+            Yserial = Yserial[1:13]
+            write('Yserial Entered: ' + Yserial + '\n')
+    elif not regex_Yserial:
+            write("Wrong serial number!")
+
+lblSerNum = Label(configFrame, text="Serial Number")
+lblSerNum.grid(column=0, row=1, sticky=W, pady=5)
+YSerial_Frame = tk.Label(configFrame, bd=10, width=15)
+YSerial_Frame.grid(column=1, row=1, sticky=W, pady=5)
+
+
+def clear_entry(event, entry):
+    entry.delete(0, END)
+
+
+entrytext_YSerial = tk.StringVar()
+entry_Yserial = tk.Entry(YSerial_Frame, textvariable=entrytext_YSerial)
+entry_Yserial.place(relwidth=1, relheight=1)
+# placeholder_text = 'Write serial here'
+# entry_Yserial.insert(0, placeholder_text)
+entry_Yserial.bind("<Button-1>", lambda event: clear_entry(event, entry_Yserial))
+entry_Yserial.bind('<Return>', lambda _: Yserial_input())
+
+
+YCODE_frame = tk.Frame(master, bg='#2e2d2d', bd=10)
+YCODE_frame.place(relx=0.1, rely=0.04, relwidth=0.1, relheight=0.04)
+
+entrytext_Ycode = tk.StringVar()
+entry_Ycode = tk.Entry(YCODE_frame, textvariable=entrytext_Ycode)
+entry_Ycode.place(relwidth=1, relheight=1)
+# placeholder_text = 'Write YCode here'
+# entry_Ycode.insert(0, placeholder_text)
+entry_Ycode.bind("<Button-1>", lambda event: clear_entry(event, entry_Ycode))
+entry_Ycode.bind('<Return>', lambda _: Ycode_input())
+
+
+
+
+def Ycode_input():
+    entry_Ycode = entrytext_Ycode.get()
+    regex_Ycode = re.findall(r'Y00-\d\d\w[/]\d\d.\w\d\d?\d?', entry_Ycode)
+    if regex_Ycode:
+        Ycode = regex_Ycode[0]
+        write('Ycode: ' + Ycode + '\n')
+    elif not regex_Ycode:
+
+        write("Warning")
+
+
+
+
+text_box = tk.Text(monFrame, state=tk.DISABLED, width=60, height=35)
+text_box.grid(row=0, column=0, padx=20, pady=20)
+
+checkbox_MAC = tk.Checkbutton(testsFrame, text="Set MAC Address")
+checkbox_MAC.grid(row=0, column=0, sticky='W', padx=5, pady=5)
+
+checkbox_DIAG = tk.Checkbutton(testsFrame, text="Diag Test")
+checkbox_DIAG.grid(row=1, column=0, sticky='W', padx=5, pady=5)
+
+
+checkbox_FSE = tk.Checkbutton(testsFrame, text="FSE")
+checkbox_FSE.grid(row=2, column=0, sticky='W', padx=5, pady=5)
+
+checkbox_license = tk.Checkbutton(testsFrame, text="Set License")
+checkbox_license.grid(row=3, column=0, sticky='W', padx=5, pady=5)
+
+checkbox_serial_interface = tk.Checkbutton(testsFrame, text="Serial Interface")
+checkbox_serial_interface.grid(row=4, column=0, sticky='W', padx=5, pady=5)
+
+checkbox_Yserial_test = tk.Checkbutton(testsFrame, text="Yserial Test")
+checkbox_Yserial_test.grid(row=5, column=0, sticky='W', padx=5, pady=5)
+
+checkbox_Ycode_test = tk.Checkbutton(testsFrame, text="Ycode Test")
+checkbox_Ycode_test.grid(row=6, column=0, sticky='W', padx=5, pady=5)
+
+checkbox_HWID = tk.Checkbutton(testsFrame, text="Hardware ID")
+checkbox_HWID.grid(row=7, column=0, sticky='W', padx=5, pady=5)
+
+checkbox_TEMP = tk.Checkbutton(testsFrame, text="Temp Test")
+checkbox_TEMP.grid(row=8, column=0, sticky='W', padx=5, pady=5)
+
+checkbox_RTC = tk.Checkbutton(testsFrame, text="RTC Test")
+checkbox_RTC.grid(row=9, column=0, sticky='W', padx=5, pady=5)
+
+checkbox_PLL = tk.Checkbutton(testsFrame, text="PLL Test")
+checkbox_PLL.grid(row=10, column=0, sticky='W', padx=5, pady=5)
+
+checkbox_Pone = tk.Checkbutton(testsFrame, text="Pone Tests")
+checkbox_Pone.grid(row=11, column=0, sticky='W', padx=5, pady=5)
+
+checkbox_LED = tk.Checkbutton(testsFrame, text="LED Test")
+checkbox_LED.grid(row=12, column=0, sticky='W', padx=5, pady=5)
+
+checkbox_Traffic = tk.Checkbutton(testsFrame, text="Traffic Test")
+checkbox_Traffic.grid(row=13, column=0, sticky='W', padx=5, pady=5)
+
+checkbox_Traffic = tk.Checkbutton(testsFrame, text="Sync In/Out Test")
+checkbox_Traffic.grid(row=14, column=0, sticky='W', padx=5, pady=5)
+
+checkbox_Traffic = tk.Checkbutton(testsFrame, text="System Info")
+checkbox_Traffic.grid(row=14, column=0, sticky='W', padx=5, pady=5)
+
+
+def write(string):
+    text_box.config(state=tk.NORMAL)
+    text_box.insert("end", string + "\n")
+    text_box.see("end")
+    text_box.config(state=tk.DISABLED)
+
+
+write("Steps before you start the test :\n")
+write('1.Check that the time of the PC is set correctly!\n')
+write('2.Load on MTS 5800 tester, omnibas_10P_port1_wovlan.tst and omnibas_10P_port2_wovlan for Port 1 and Port 2\nrespectively, if not set already.\n ')
+write('3.Set the IP of MTS 5800 traffic tester to 192.168.100.200, if not set already.\n')
+write('4.Power on the BBU\n')
+write("5.Select or enter Y-code and press enter\n")
+write("4.Enter Serial Number and press enter\n")
+write("5.Enter User ID and press enter\n")
+write('6.Choose the tests by clicking the checkboxes\n')
+write("7.Press 'Run Tests'\n")
+write("8.A message will show up, press 'OK' first,\n then reset the BBU.\n")
+#
+#
+# statusBar = Label(master, width=10 * len(GroupTests), relief=SUNKEN, text='Test Status: IDLE')
+#
+# statusBar.grid(column=0, row=2, sticky=SW, padx=5, pady=20, columnspan=3)  # len(GroupTests)) #3
+
+MAC_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+MAC_label.grid(row=0, column=1, sticky='W', padx=5, pady=5)
+
+
+
+Diag_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+Diag_label.grid(row=1, column=1, sticky='W', padx=5, pady=5)
+
+
+
+FSE_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+FSE_label.grid(row=2, column=1, sticky='W', padx=5, pady=5)
+
+
+
+license_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+license_label.grid(row=3, column=1, sticky='W', padx=5, pady=5)
+
+
+
+serial_interface_test_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+serial_interface_test_label.grid(row=4, column=1, sticky='W', padx=5, pady=5)
+
+
+
+serial_usb_interface_test_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+serial_usb_interface_test_label.grid(row=5, column=1, sticky='W', padx=5, pady=5)
+
+
+
+Yserial_test_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+Yserial_test_label.grid(row=6, column=1, sticky='W', padx=5, pady=5)
+
+
+
+Ycode_test_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+Ycode_test_label.grid(row=7, column=1, sticky='W', padx=5, pady=5)
+
+
+
+HWID_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+HWID_label.grid(row=8, column=1, sticky='W', padx=5, pady=5)
+
+
+
+Temp_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+Temp_label.grid(row=9, column=1, sticky='W', padx=5, pady=5)
+
+
+
+RTC_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+RTC_label.grid(row=10, column=1, sticky='W', padx=5, pady=5)
+
+
+
+PLL_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+PLL_label.grid(row=11, column=1, sticky='W', padx=5, pady=5)
+
+
+
+Pone_Interface_vin_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+Pone_Interface_vin_label.grid(row=12, column=1, sticky='W', padx=5, pady=5)
+
+
+Pone_Interface_vout_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+Pone_Interface_vout_label.grid(row=12, column=2, sticky='W', padx=5, pady=5)
+
+
+
+Leds_on_pone_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+Leds_on_pone_label.grid(row=12, column=3, sticky='W', padx=5, pady=5)
+
+leds_on_board_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+leds_on_board_label.grid(row=13, column=1, sticky='W', padx=5, pady=5)
+
+
+Traffic_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+Traffic_label.grid(row=14, column=1, sticky='W', padx=5, pady=5)
+
+
+
+leds_on_eth_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+leds_on_eth_label.grid(row=15, column=1, sticky='W', padx=5, pady=5)
+
+
+
+
+sync_in_out_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+sync_in_out_label.grid(row=16, column=1, sticky='W', padx=5, pady=5)
+
+
+
+
+System_info_label = tk.Label(testsFrame, width=10, relief=SUNKEN)
+System_info_label.grid(row=17, column=1, sticky='W', padx=5, pady=5)
+
+
+# remaining_mac_info_label = tk.Label(mainWindow, text='Remaining MAC Addresses: ')
+# remaining_mac_info_label.place(relx=0.7, rely=0.75, relwidth=0.15, relheight=0.04)
+#
+# mac_info_label = tk.Label(mainWindow, text='MAC Address: ', font=40)
+# mac_info_label.place(relx=0.7, rely=0.79, relwidth=0.15, relheight=0.04)
+#
+# Ycode_label = tk.Label(mainWindow, text="Set YCode: ", font=40)
+# Ycode_label.place(relx=0.7, rely=0.83, relwidth=0.15, relheight=0.04)
+#
+# Yserial_label = tk.Label(mainWindow, text="Set YSerial: ", font=40)
+# Yserial_label.place(relx=0.70, rely=0.87, relwidth=0.15, relheight=0.04)
+#
+# remaining_mac_info_output_label = tk.Label(mainWindow, text='')
+# remaining_mac_info_output_label.place(relx=0.85, rely=0.75, relwidth=0.1, relheight=0.04)
+#
+# mac_info_output_label = tk.Label(mainWindow, text='')
+# mac_info_output_label.place(relx=0.85, rely=0.79, relwidth=0.1, relheight=0.04)
+#
+# Ycode_output_label = tk.Label(mainWindow, text="")
+# Ycode_output_label.place(relx=0.85, rely=0.83, relwidth=0.1, relheight=0.04)
+#
+# Yserial_output_label = tk.Label(mainWindow, text="", font=40)
+# Yserial_output_label.place(relx=0.85, rely=0.87, relwidth=0.1, relheight=0.04)
+#
+# FSE_version_info_label = tk.Label(mainWindow, text='FSE Version:', font=40)
+# FSE_version_info_label.place(relx=0.70, rely=0.91, relwidth=0.15, relheight=0.04)
+#
+# FSE_version_info_output_label = tk.Label(mainWindow, text='')
+# FSE_version_info_output_label.place(relx=0.85, rely=0.91, relwidth=0.15, relheight=0.04)
+#
+# RTC_info_label = tk.Label(mainWindow, text='RTC:', font=40)
+# RTC_info_label.place(relx=0.70, rely=0.95, relwidth=0.15, relheight=0.04)
+#
+# RTC_info_output_label = tk.Label(mainWindow, text='')
+# RTC_info_output_label.place(relx=0.85, rely=0.95, relwidth=0.15, relheight=0.04)
+#
+#
+
+
+master.mainloop()
