@@ -1,0 +1,295 @@
+from tkinter import *
+from tkinter import ttk
+from tkinter import scrolledtext
+import time
+import serial
+import tests
+
+
+#Constants
+GUI_WIDTH = 1000
+GUI_HEIGHT = 550
+
+#Tests definition
+GroupTests = ['TestGroup A', 'TestGroup B', 'TestGroup C', 'TestGroup D']
+SubTests = [['Test A1', 'Test A2', 'Test A3', 'Test A4', 'Test A5', 'Test A6', 'Test A7',
+             'Test A8', 'Test A9', 'Test A10'],
+            ['Test B1', 'Test B2', 'Test B3', 'Test B4', 'Test B5', 'Test B6', 'Test B7',
+             'Test B8', 'Test B9', 'Test B10'],
+            ['Test C1', 'Test C2', 'Test C3', 'Test C4', 'Test C5', 'Test C6', 'Test C7',
+            'Test C8', 'Test C9', 'Test C10'],
+            ['Test D1', 'Test D2', 'Test D3', 'Test D4', 'Test D5', 'Test D6', 'Test D7',
+             'Test D8', 'Test D9', 'Test D10']]
+
+#variables
+sncode = StringVar
+ycode = StringVar
+testerIDcode = StringVar
+userIDcode = StringVar
+ImgResultID = 2
+
+
+# def hwid_test():
+#     ser = serial.Serial('COM3', timeout=1)
+#     ser.baudrate = 115200
+#     hwid_command = b" wf_test g_sig 0 \r\n"
+#     ser.write(hwid_command)
+#     output = ser.read(1000).decode()
+#     hwid_regex = re.findall(r'\d\w\d', output)
+#     print(hwid_regex)
+#     if "0x1" in output:
+#         print('PASS')
+#         return 'PASS: 0x1'
+#     else:
+#         print('FAIL')
+#         return 'FAIL'
+
+
+
+def btn_callback():
+    #self.index = index
+    choosen = choice.get()  # Index of button pressed.
+    subtest = rb[choosen].cget('text')  # Button's text.
+    print('You chose : {}'.format(subtest))
+    res = tests.hwid_test()
+    results.insert(END, res+'\n')
+    #print(choosen)
+def autoFullTest():
+    global ImgResultID
+    ImgResultID = 2
+    showResult()
+    print("autoFullTest was clicked")
+    tests_nb.select(0)
+    for i in range(len(GroupTests)):
+        for j in range(len(SubTests[i])):
+            rb[i*len(SubTests[i])+j].config(fg='black')
+    statusBar.config(text='Test Status: In Progress')
+    statusBar.config(foreground='black', background='yellow')
+    time.sleep(.5)
+    master.update()
+    for i in range(len(GroupTests)):
+        tests_nb.select(i)
+        for j in range(len(SubTests[i])):
+            rb[i*len(SubTests[i])+j].select()  # invoke executes btn_callback also
+            rb[i*len(SubTests[i])+j].config(fg='green')
+            results.insert(END, 'Now tested ' + SubTests[i][j] + '\n')
+            print('Current rb: ', (i*len(SubTests[i])+j))
+            #if ((i*len(SubTests[i])+j-1) >= 0):
+            #    rb[i*len(SubTests[i])+j-1].config(fg='black')
+            time.sleep(.5)
+            master.update()
+    statusBar.config(text='Test Status: IDLE')
+    statusBar.config(foreground='black', background='white')
+    #showUUTResult('PASS')
+    ImgResultID = 0
+    showResult()
+    #showResult()
+def powerOn():
+    statusBar.config(text='UUT is powered on')
+    statusBar.config(foreground='red', background='white')
+def powerOff():
+    statusBar.config(text='UUT is powered off')
+    statusBar.config(foreground='black', background='white') #1225a8
+def showConfig():
+    config = "Model chosen: " + model_chosen.get() + ", Test Fixture: " + tf_chosen.get()
+    statusBar.config(text=config)
+    statusBar.config(foreground='black', background='white')
+def showUUTResult(UUTresult):
+    canvas_width = 185
+    canvas_height = 150
+    canvas = Canvas(slave, width=canvas_width, height=canvas_height)
+    canvas.grid(row=5, column=5, sticky=N)
+    if UUTresult == 'PASS':
+        img = PhotoImage(file="C:\PythonPrograms\Pass.png")
+        print('Result is PASS')
+    elif UUTresult == 'FAIL':
+        img = PhotoImage(file="C:\PythonPrograms\Fail.png")
+        print('Result is FAIL')
+    else:
+        print('Unknown UUT Result Type!')
+    canvas.create_image(10, 10, anchor=NW, image=img)
+    canvas.image = img
+def newTest():
+    print("newTest was clicked")
+    slave = Toplevel()
+    #self.resultWithdraw(self.slave)
+    #self.resultIconify(self.slave)
+    slave.deiconify()
+    slave.iconbitmap('C:\MyDocuments\Delphi\IcomIcons\intracom1.ico')
+    slave.geometry('185x150+0+0')
+    slave.title("Res")
+    canvas_width = 185
+    canvas_height = 150
+    canvas = Canvas(slave, width=canvas_width, height=canvas_height)
+    canvas.grid(row=5, column=5, sticky=N)
+    #canvas.pack()
+    img = PhotoImage(file="C:\PythonPrograms\Fail.png")
+    canvas.create_image(10, 10, anchor=NW, image=img)
+    canvas.image = img
+def endTest():
+    print("newTest was clicked")
+def showResult():
+    global ImgResultID
+    if ImgResultID == 0:
+        lblResult.configure(image=imgPASS)
+        master.update_idletasks()
+        ImgResultID = 1
+        print(ImgResultID)
+    elif ImgResultID == 1:
+        lblResult.configure(image=imgFAIL)
+        master.update_idletasks()
+        ImgResultID = 2
+        print(ImgResultID)
+    elif ImgResultID == 2:
+        lblResult.configure(image=imgNULL)
+        master.update_idletasks()
+        ImgResultID = 0
+        print(ImgResultID)
+
+def runTest4():
+    return
+
+master = Tk()
+gui_resolution = str(GUI_WIDTH)+'x'+str(GUI_HEIGHT)+'+0+0'
+master.geometry(gui_resolution)
+master.resizable(FALSE, FALSE)
+master.title("INTRACOM TELECOM Test Equipment GUI Template")
+# master.iconbitmap('C:\MyDocuments\Delphi\IcomIcons\intracom1.ico')
+
+# imgPASS = PhotoImage(file="C:\PythonPrograms\PASS.png")
+# imgFAIL = PhotoImage(file="C:\PythonPrograms\FAIL.png")
+# imgNULL = PhotoImage(file="C:\PythonPrograms\\NULL.png")
+
+testsFrame = LabelFrame(master, width=GUI_WIDTH/4, height=GUI_HEIGHT*.95, text='Tests')
+testsFrame.grid(column=0, row=0, sticky=N)
+monFrame = LabelFrame(master, width=GUI_WIDTH*2, height=GUI_HEIGHT*.55, text='Monitors')
+monFrame.grid(column=2, row=0, sticky=N)
+#self.resFrame = Frame(master, width=GUI_WIDTH/4, height=GUI_HEIGHT*.10) #, text='UUT Result')
+#self.resFrame = Frame(self.slave, width=185, height=150)  # , text='UUT Result')
+#self.resFrame.grid(column=4, row=2, sticky=N)
+configFrame = LabelFrame(master, width=GUI_WIDTH/4, height=GUI_HEIGHT*.95, text='Configuration & Control')
+configFrame.grid(column=4, row=0, sticky=N)
+
+tests_tab = []
+rb = []
+choice = IntVar(value=-1)  # -1 means no button is pushed.
+tests_nb = ttk.Notebook(testsFrame)
+for i in range(len(GroupTests)):
+      teststab = Frame(tests_nb)
+      tests_nb.add(teststab, text=GroupTests[i])
+      tests_tab.append(teststab)
+
+      #choice = IntVar(value=-1)  # -1 means no button is pushed.
+      for j, subtest in enumerate(SubTests[i]):
+           radio_btn = Radiobutton(tests_tab[i], text=subtest, fg='black', value=(i*len(SubTests[i])+j),
+                                        variable=choice, command=btn_callback)
+           radio_btn.grid(column=0, row=(2 + j), sticky=W, ipadx=0)
+           rb.append(radio_btn)
+      print(i)
+      print(SubTests[i])
+
+print(tests_tab)
+print('choice: ', choice.get())
+print(rb)
+tests_nb.grid(column=0, row=0, columnspan=4)
+# lblResult = Label(testsFrame, image=imgNULL, text="", width=300)
+# lblResult.grid(column=0, row=2, sticky=NSEW)
+#btnResult = Button(testsFrame, command=showResult, text="Show Result", width=10)
+#btnResult.grid(column=1, row=2, sticky=E)
+statusBar = Label(master, width=10 * len(GroupTests), relief=SUNKEN, text='Test Status: IDLE')
+statusBar.grid(column=0, row=2, sticky=SW, padx=10, pady=20, columnspan=3)  # len(GroupTests)) #3
+#tests_nb.select(3)
+
+col = 0
+mon_nb = ttk.Notebook(monFrame)
+mon_nb_tab1 = Frame(mon_nb)
+mon_nb_tab2 = Frame(mon_nb)
+mon_nb_tab3 = Frame(mon_nb)
+mon_nb_tab4 = Frame(mon_nb)
+mon_nb_tab5 = Frame(mon_nb)
+mon_nb.add(mon_nb_tab1, text="Test Results")
+mon_nb.add(mon_nb_tab2, text="Port 1")
+mon_nb.add(mon_nb_tab3, text="Port 2")
+mon_nb.add(mon_nb_tab4, text="Neptune Monitor")
+mon_nb.add(mon_nb_tab5, text="UUT Table")
+mon_nb.grid(column=4, row=0, columnspan=4)
+results = scrolledtext.ScrolledText(mon_nb_tab1, width=40, height=22, bg='lightcyan', fg='black')
+results.grid(column=(col + len(GroupTests)), row=0, padx=30, pady=30)
+results.insert(END, 'Waiting to start ...\n')
+port1 = scrolledtext.ScrolledText(mon_nb_tab2, width=40, height=22, bg='lightblue', fg='black')
+port1.grid(column=(col + len(GroupTests)), row=0, padx=30, pady=30)
+port1.insert(END, 'Waiting to connect ...\n')
+port2 = scrolledtext.ScrolledText(mon_nb_tab3, width=40, height=22, bg='#afd3a3',
+                                          fg='black')  # lightblue was lightgray
+port2.grid(column=(col + len(GroupTests)), row=0, padx=30, pady=30)
+port2.insert(END, 'Waiting to connect ...\n')
+neptuneMon = scrolledtext.ScrolledText(mon_nb_tab4, width=40, height=22, bg='black', fg='lightgreen')
+neptuneMon.grid(column=(col + len(GroupTests)), row=0, padx=30, pady=30)
+neptuneMon.insert(END, 'Waiting to connect ...\n')
+for i in range(20):
+      for j in range(10):
+          tableCell = Label(mon_nb_tab5, width=5, relief=SUNKEN, text='')
+          tableCell.grid(column=j, row=i, sticky=SW, padx=0, pady=0)
+          if i == 0 :
+               tableCell.config(background='darkgray')
+               tableCell.config(text='Col'+str(j))
+          if j == 0 :
+               tableCell.config(background='darkgray')
+               tableCell.config(text='Row'+str(i))
+
+lblSerNum = Label(configFrame, text="Serial Number")
+lblSerNum.grid(column=0, row=1, sticky=W, padx=5)
+entrySerNum = Entry(configFrame, width=12, textvariable=sncode)  # , font=('Verdana', 9))
+entrySerNum.grid(column=0, row=2, sticky=W, padx=5)
+lblYNum = Label(configFrame, text="Y Number")
+lblYNum.grid(column=0, row=3, sticky=W, padx=5)
+entryYNum = Entry(configFrame, width=12, textvariable=ycode)  # , font=('Verdana', 9))
+entryYNum.grid(column=0, row=4, sticky=W, padx=5)
+lblTesterID = Label(configFrame, text="Tester ID")
+lblTesterID.grid(column=1, row=1, sticky=W, padx=5)
+entryTesterID = Entry(configFrame, width=12, textvariable=testerIDcode)  # , font=('Verdana', 9))
+entryTesterID.grid(column=1, row=2, sticky=W, padx=5)
+lblUserID = Label(configFrame, text="User ID")
+lblUserID.grid(column=1, row=3, sticky=W, padx=5)
+entryUserID = Entry(configFrame, width=12, textvariable=userIDcode)  # , font=('Verdana', 9))
+entryUserID.grid(column=1, row=4, sticky=W, padx=5)
+
+Label(configFrame, text="Model Selection").grid(column=0, row=5, sticky=W)
+modelNumber = StringVar()
+model_chosen = ttk.Combobox(configFrame, width=12, textvariable=modelNumber, state='readonly')
+#model_chosen.bind('<<ComboboxSelected>>', callback)
+model_chosen['values'] = ('V3', 'V4', 'V6', 'V7', 'V8')
+model_chosen.grid(column=0, row=6)
+model_chosen.current(0)
+print('model chosen: ', model_chosen.get())
+
+Label(configFrame, text="Test Fixture").grid(column=0, row=7, sticky=W)
+tfNumber = StringVar()
+tf_chosen = ttk.Combobox(configFrame, width=12, textvariable=tfNumber, state='readonly')
+tf_chosen['values'] = ('TF01R', 'TF02', 'TF03R', 'TF04', 'TF05')
+#tf_chosen.bind('<<ComboboxSelected>>', callback)
+tf_chosen.grid(column=0, row=8)
+tf_chosen.current(0)
+print('tf chosen: ', tf_chosen.get())
+
+fullTest = Button(configFrame, text="Auto Full Test", command=autoFullTest)
+fullTest.grid(column=0, row=9, pady=5, ipadx=12)
+powerOnButton = Button(configFrame, text="Power On", command=powerOn)
+powerOnButton.grid(column=0, row=10, pady=5, ipadx=12)
+showConfigButton = Button(configFrame, text="Show Config", command=showConfig)
+showConfigButton.grid(column=1, row=10, pady=5, ipadx=12)
+powerOffButton = Button(configFrame, text="Power Off", command=powerOff)
+powerOffButton.grid(column=0, row=11, pady=5, ipadx=12)
+newTestButton = Button(configFrame, text="New Test", command=showResult) #newTest)  # showPassTestResult)
+newTestButton.grid(column=1, row=9, pady=5, ipadx=12)
+endTestButton = Button(configFrame, text="End Test", command=showResult) #endTest)  # showPassTestResult)
+endTestButton.grid(column=1, row=11, pady=5, ipadx=12)
+passTestButton = Button(configFrame, text="Pass Test") #, command=showUUTResult('PASS')
+passTestButton.grid(column=1, row=6, pady=5, ipadx=12)
+failTestButton = Button(configFrame, text="Fail Test") #, command=showUUTResult('FAIL')
+failTestButton.grid(column=1, row=8, pady=5, ipadx=12)
+
+exitButton = Button(master, text="EXIT", width=30, command=master.quit)
+exitButton.grid(column=4, row=2, pady=20, padx=20, sticky=SE)
+
+master.mainloop()
